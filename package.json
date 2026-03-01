@@ -19,6 +19,9 @@
     "react-dom": "^18",
     "twilio": "^5.12.2"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",

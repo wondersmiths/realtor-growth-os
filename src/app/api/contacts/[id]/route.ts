@@ -19,7 +19,10 @@ export async function GET(
     .eq("realtor_id", user.id)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  if (error) {
+    const status = error.code === "PGRST116" ? 404 : 500;
+    return NextResponse.json({ error: error.message }, { status });
+  }
   return NextResponse.json(data);
 }
 

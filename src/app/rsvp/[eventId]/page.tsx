@@ -1,5 +1,41 @@
+import type { Metadata } from "next";
 import RSVPForm from "@/components/RSVPForm";
 import { createServiceClient } from "@/lib/supabase/server";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ eventId: string }>;
+}): Promise<Metadata> {
+  const { eventId } = await params;
+  const supabase = createServiceClient();
+  const { data: event } = await supabase
+    .from("events")
+    .select("title, description, event_date, location")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) {
+    return { title: "Event Not Found" };
+  }
+
+  const dateStr = event.event_date
+    ? new Date(event.event_date).toLocaleDateString()
+    : "";
+  const description =
+    event.description ||
+    `RSVP for ${event.title}${dateStr ? ` on ${dateStr}` : ""}${event.location ? ` at ${event.location}` : ""}`;
+
+  return {
+    title: `RSVP — ${event.title}`,
+    description,
+    openGraph: {
+      title: `RSVP — ${event.title}`,
+      description,
+      type: "website",
+    },
+  };
+}
 
 export default async function RSVPPage({
   params,

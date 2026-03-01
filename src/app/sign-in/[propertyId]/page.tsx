@@ -1,5 +1,37 @@
+import type { Metadata } from "next";
 import SignInForm from "@/components/SignInForm";
 import { createServiceClient } from "@/lib/supabase/server";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ propertyId: string }>;
+}): Promise<Metadata> {
+  const { propertyId } = await params;
+  const supabase = createServiceClient();
+  const { data: event } = await supabase
+    .from("events")
+    .select("title, property_address, event_date")
+    .eq("id", propertyId)
+    .eq("event_type", "open_house")
+    .single();
+
+  if (!event) {
+    return { title: "Open House Not Found" };
+  }
+
+  const description = `Sign in for the open house${event.property_address ? ` at ${event.property_address}` : ""}${event.event_date ? ` on ${new Date(event.event_date).toLocaleDateString()}` : ""}`;
+
+  return {
+    title: `Open House — ${event.title}`,
+    description,
+    openGraph: {
+      title: `Open House — ${event.title}`,
+      description,
+      type: "website",
+    },
+  };
+}
 
 export default async function SignInPage({
   params,

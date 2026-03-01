@@ -1,4 +1,6 @@
+import { SupabaseClient } from "@supabase/supabase-js";
 import { Automation, Contact } from "./types";
+import { sendMessageToContact } from "./messages";
 
 interface TriggerContext {
   event?: string; // e.g. "new_contact", "rsvp"
@@ -36,6 +38,7 @@ export interface ActionResult {
 }
 
 export async function executeAction(
+  supabase: SupabaseClient,
   automation: Automation,
   contact: Contact,
   realtorId: string
@@ -44,23 +47,17 @@ export async function executeAction(
 
   switch (automation.action_type) {
     case "send_message": {
-      // Trigger message send via internal API
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL ? "" : "http://localhost:3000"}/api/messages`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contact_id: contact.id,
-            realtor_id: realtorId,
-            template: config.template || "general_followup",
-          }),
-        }
-      );
+      const result = await sendMessageToContact(supabase, {
+        contact_id: contact.id,
+        realtor_id: realtorId,
+        template: (config.template as string) || "general_followup",
+      });
       return {
-        success: res.ok,
+        success: result.success,
         action: "send_message",
-        detail: `Message to ${contact.first_name}`,
+        detail: result.success
+          ? `Message to ${contact.first_name}`
+          : result.error || "Message send failed",
       };
     }
 

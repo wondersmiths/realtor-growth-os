@@ -15,11 +15,15 @@ export async function POST(req: NextRequest) {
   const contactId = body.contact_id as string | undefined;
 
   // Fetch enabled automations for this realtor
-  const { data: automations } = await supabase
+  const { data: automations, error: autoError } = await supabase
     .from("automations")
     .select("*")
     .eq("realtor_id", user.id)
     .eq("enabled", true);
+
+  if (autoError) {
+    return NextResponse.json({ error: autoError.message }, { status: 500 });
+  }
 
   if (!automations || automations.length === 0) {
     return NextResponse.json({ results: [], message: "No active automations" });
@@ -28,12 +32,15 @@ export async function POST(req: NextRequest) {
   // Fetch the target contact if provided
   let contact: Contact | null = null;
   if (contactId) {
-    const { data } = await supabase
+    const { data, error: contactError } = await supabase
       .from("contacts")
       .select("*")
       .eq("id", contactId)
       .eq("realtor_id", user.id)
       .single();
+    if (contactError) {
+      return NextResponse.json({ error: contactError.message }, { status: 500 });
+    }
     contact = data as Contact | null;
   }
 
@@ -53,7 +60,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (triggered && contact) {
-      const result = await executeAction(auto, contact, user.id);
+      const result = await executeAction(supabase, auto, contact, user.id);
       results.push({ automation: auto.name, ...result });
     }
   }
