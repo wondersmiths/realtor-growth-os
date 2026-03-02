@@ -42,21 +42,19 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
-    const data = await res.json();
+    setLoading(false);
 
-    if (!res.ok) {
-      setLoading(false);
-      setError(data.error || "Login failed");
+    if (authError) {
+      setError(authError.message);
       return;
     }
 
-    // API route set cookies on the response; hard reload picks them up
     window.location.href = "/dashboard";
   }
 

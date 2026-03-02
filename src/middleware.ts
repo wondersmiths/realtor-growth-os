@@ -5,7 +5,6 @@ const publicRoutes = [
   "/auth",
   "/rsvp",
   "/sign-in",
-  "/api/auth",
   "/api/events/*/rsvp",
   "/api/open-house/*/sign-in",
 ];
