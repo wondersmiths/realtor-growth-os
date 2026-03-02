@@ -29,6 +29,16 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Skip auth check entirely for public routes — avoids cookie conflicts
+  // with routes that set their own auth cookies (e.g. /api/auth/login)
+  if (isPublicRoute(pathname)) {
+    const response = NextResponse.next({ request });
+    response.headers.set("x-pathname", pathname);
+    return response;
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -56,20 +66,13 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh the session — IMPORTANT: do not remove this
+  // Refresh the session
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-
   // Inject x-pathname header for layout to conditionally render nav
   supabaseResponse.headers.set("x-pathname", pathname);
-
-  // Allow public routes through without auth
-  if (isPublicRoute(pathname)) {
-    return supabaseResponse;
-  }
 
   // Redirect unauthenticated users to login
   if (!user) {
