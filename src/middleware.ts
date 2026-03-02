@@ -81,7 +81,7 @@ export async function middleware(request: NextRequest) {
   if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
-    url.searchParams.set("mw_debug", `path:${pathname}|user:null|error:${userError?.message ?? "none"}|cookies:${sbCookies.map((c) => c.name).join(",") || "none"}`);
+    url.searchParams.set("mw_debug", `path:${pathname}|user:null|error:${userError?.message ?? "none"}|cookies:${sbCookies.map((c) => `${c.name}(${c.value.length}ch,starts:${c.value.substring(0, 20)})`).join(",") || "none"}`);
     const redirectResponse = NextResponse.redirect(url);
     // Propagate any cookies set during getUser() (e.g. cleared expired tokens)
     supabaseResponse.cookies.getAll().forEach((cookie) => {
