@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 type Mode = "magic" | "password";
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const mwDebug = searchParams.get("mw_debug");
   const [mode, setMode] = useState<Mode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -79,6 +82,9 @@ export default function LoginPage() {
           Sign in to your account.
         </p>
 
+        {mwDebug && (
+          <pre className="text-xs bg-red-100 p-2 mb-4 rounded overflow-x-auto whitespace-pre-wrap break-all text-red-700">MW redirect: {mwDebug}</pre>
+        )}
         {debug && (
           <pre className="text-xs bg-gray-100 p-2 mb-4 rounded overflow-x-auto whitespace-pre-wrap break-all text-gray-700">{debug}</pre>
         )}
