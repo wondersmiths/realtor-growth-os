@@ -45,11 +45,14 @@ export default function LoginPage() {
 
     const result = await loginWithPassword(email, password);
 
-    // Only reaches here if redirect didn't happen (i.e. error)
-    setLoading(false);
-    if (result?.error) {
+    if (result.error) {
+      setLoading(false);
       setError(result.error);
+      return;
     }
+
+    // Server action set cookies; hard reload ensures middleware picks them up
+    window.location.href = "/dashboard";
   }
 
   return (
