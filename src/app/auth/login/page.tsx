@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { loginWithPassword } from "./actions";
 
 type Mode = "magic" | "password";
 
@@ -42,25 +43,13 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const supabase = createClient();
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const result = await loginWithPassword(email, password);
 
+    // Only reaches here if redirect didn't happen (i.e. error)
     setLoading(false);
-
-    if (authError) {
-      setError(authError.message);
-      return;
+    if (result?.error) {
+      setError(result.error);
     }
-
-    if (!data.session) {
-      setError("Please verify your email before signing in.");
-      return;
-    }
-
-    window.location.href = "/dashboard";
   }
 
   return (
