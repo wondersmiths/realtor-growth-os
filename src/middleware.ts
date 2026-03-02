@@ -68,7 +68,11 @@ export async function middleware(request: NextRequest) {
   // Refresh the session
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
+
+  const sbCookies = request.cookies.getAll().filter((c) => c.name.startsWith("sb-"));
+  console.log(`[MW] ${pathname} | user: ${user?.id ?? "null"} | error: ${userError?.message ?? "none"} | sb-cookies: ${sbCookies.map((c) => `${c.name}(${c.value.length}chars)`).join(", ") || "none"}`);
 
   // Inject x-pathname header for layout to conditionally render nav
   supabaseResponse.headers.set("x-pathname", pathname);

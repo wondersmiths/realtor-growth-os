@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [debug, setDebug] = useState("");
 
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
@@ -40,10 +41,15 @@ export default function LoginPage() {
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setDebug("");
     setLoading(true);
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    setDebug(`[1] URL set: ${!!supabaseUrl} (${supabaseUrl?.substring(0, 30)}...) | Key set: ${!!supabaseKey} (${supabaseKey?.substring(0, 20)}...)`);
+
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -51,10 +57,17 @@ export default function LoginPage() {
     setLoading(false);
 
     if (authError) {
+      setDebug((d) => d + ` | [2] Auth error: ${authError.message}`);
       setError(authError.message);
       return;
     }
 
+    const hasSession = !!data.session;
+    const cookies = document.cookie.split(";").map((c) => c.trim().split("=")[0]).filter((n) => n.startsWith("sb-"));
+    setDebug((d) => d + ` | [2] Success! session: ${hasSession}, cookies: [${cookies.join(", ")}]`);
+
+    // Brief delay to show debug info before redirect
+    await new Promise((r) => setTimeout(r, 2000));
     window.location.href = "/dashboard";
   }
 
@@ -65,6 +78,10 @@ export default function LoginPage() {
         <p className="text-gray-600 text-sm mb-6">
           Sign in to your account.
         </p>
+
+        {debug && (
+          <pre className="text-xs bg-gray-100 p-2 mb-4 rounded overflow-x-auto whitespace-pre-wrap break-all text-gray-700">{debug}</pre>
+        )}
 
         {/* Mode toggle */}
         <div className="flex rounded-md border mb-6">
