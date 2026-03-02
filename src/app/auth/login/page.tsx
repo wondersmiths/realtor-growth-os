@@ -66,8 +66,15 @@ export default function LoginPage() {
     }
 
     const hasSession = !!data.session;
-    const cookies = document.cookie.split(";").map((c) => c.trim().split("=")[0]).filter((n) => n.startsWith("sb-"));
-    setDebug((d) => d + ` | [2] Success! session: ${hasSession}, cookies: [${cookies.join(", ")}]`);
+    const allCookies = document.cookie.split(";").map((c) => c.trim());
+    const sbCookies = allCookies.filter((c) => c.startsWith("sb-"));
+    const cookieInfo = sbCookies.map((c) => {
+      const eqIdx = c.indexOf("=");
+      const name = c.substring(0, eqIdx);
+      const val = c.substring(eqIdx + 1);
+      return `${name}(${val.length}ch,starts:${val.substring(0, 15)})`;
+    });
+    setDebug((d) => d + ` | [2] Success! session: ${hasSession}, cookies: [${cookieInfo.join(", ")}]`);
 
     // Brief delay to show debug info before redirect
     await new Promise((r) => setTimeout(r, 2000));
