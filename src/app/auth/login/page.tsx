@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { loginWithPassword } from "./actions";
 
 type Mode = "magic" | "password";
 
@@ -43,15 +42,21 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const result = await loginWithPassword(email, password);
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-    if (result.error) {
+    const data = await res.json();
+
+    if (!res.ok) {
       setLoading(false);
-      setError(result.error);
+      setError(data.error || "Login failed");
       return;
     }
 
-    // Server action set cookies; hard reload ensures middleware picks them up
+    // API route set cookies on the response; hard reload picks them up
     window.location.href = "/dashboard";
   }
 
