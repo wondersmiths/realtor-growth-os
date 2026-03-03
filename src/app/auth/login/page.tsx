@@ -64,7 +64,7 @@ export default function LoginPage() {
       .map((c) => c.trim())
       .filter((c) => c.startsWith("sb-"));
 
-    const info = [
+    const lines = [
       `session: ${!!data.session}`,
       `document.cookie length: ${allCookies.length}`,
       `sb- cookies found: ${sbCookies.length}`,
@@ -72,18 +72,26 @@ export default function LoginPage() {
         const eq = c.indexOf("=");
         return `  ${c.substring(0, eq)}: ${c.substring(eq + 1).length} chars`;
       }),
-      `all cookies: ${allCookies.substring(0, 200)}${allCookies.length > 200 ? "..." : ""}`,
-    ].join("\n");
+    ];
 
-    setCookieDebug(info);
-
-    // If cookies look good, navigate after a short delay
-    if (sbCookies.length > 0) {
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 3000);
+    // Test if cookies are actually sent to the server
+    try {
+      const res = await fetch("/api/auth/debug", { credentials: "include" });
+      const serverData = await res.json();
+      lines.push(
+        `\nServer sees:`,
+        `  rawCookieHeaderLength: ${serverData.rawCookieHeaderLength}`,
+        `  sb cookies: ${JSON.stringify(serverData.sbCookiesFromRawHeader)}`,
+        `  auth user: ${serverData.auth?.user ?? "null"}`,
+        `  auth error: ${serverData.auth?.error ?? "none"}`
+      );
+    } catch (e) {
+      lines.push(`\nServer fetch error: ${e}`);
     }
-    // If no cookies, stay on page so user can see the debug info
+
+    setCookieDebug(lines.join("\n"));
+
+    // Don't auto-redirect — let user see the full debug
   }
 
   return (
@@ -100,9 +108,8 @@ export default function LoginPage() {
               {cookieDebug}
             </pre>
             <p className="text-xs text-gray-500 mt-1">
-              {cookieDebug.includes("sb- cookies found: 0")
-                ? "⚠ No auth cookies found — this is the problem"
-                : "✓ Cookies set — redirecting to dashboard in 3s..."}
+              Please screenshot this and share it.
+              {" "}<button onClick={() => window.location.href = "/dashboard"} className="text-blue-600 underline">Go to Dashboard</button>
             </p>
           </div>
         )}
