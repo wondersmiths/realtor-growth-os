@@ -7,6 +7,7 @@ const publicRoutes = [
   "/sign-in",
   "/api/events/*/rsvp",
   "/api/open-house/*/sign-in",
+  "/api/auth/debug",
 ];
 
 function isPublicRoute(pathname: string): boolean {
@@ -36,8 +37,11 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  let supabaseResponse = NextResponse.next({ request });
-
+  // Read-only Supabase client — the middleware only checks auth, it does NOT
+  // write Set-Cookie headers. This avoids a known issue where the
+  // onAuthStateChange → applyServerStorage → setAll pipeline in @supabase/ssr
+  // can emit Set-Cookie headers that corrupt the session cookie on Vercel Edge.
+  // Token refresh is handled by API routes / server components instead.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -46,14 +50,8 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+        setAll() {
+          // Intentionally empty — middleware should not modify cookies.
         },
       },
     }
@@ -63,19 +61,12 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  supabaseResponse.headers.set("x-pathname", pathname);
+  const response = user
+    ? NextResponse.next({ request })
+    : NextResponse.redirect(new URL("/auth/login", request.url));
 
-  if (!user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
-    const redirectResponse = NextResponse.redirect(url);
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value);
-    });
-    return redirectResponse;
-  }
-
-  return supabaseResponse;
+  response.headers.set("x-pathname", pathname);
+  return response;
 }
 
 export const config = {
