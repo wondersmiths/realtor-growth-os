@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Event } from "@/lib/types";
 import QRCode from "@/components/QRCode";
+import PageHeader from "@/components/PageHeader";
+import EmptyState from "@/components/EmptyState";
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -81,21 +83,17 @@ export default function EventsPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Events</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
-        >
-          {showForm ? "Cancel" : "+ New Event"}
-        </button>
-      </div>
+    <div className="p-6 max-w-6xl mx-auto">
+      <PageHeader
+        title="Events"
+        actionLabel={showForm ? "Cancel" : "+ New Event"}
+        onAction={() => setShowForm(!showForm)}
+      />
 
       {showForm && (
         <form
           onSubmit={handleCreate}
-          className="mb-8 p-4 border rounded-lg bg-gray-50 space-y-3 max-w-md"
+          className="mb-8 bg-white rounded-lg border shadow-sm p-5 space-y-3 max-w-md"
         >
           <input
             name="title"
@@ -129,11 +127,17 @@ export default function EventsPage() {
       )}
 
       {events.length === 0 ? (
-        <p className="text-gray-500">No events yet.</p>
+        <EmptyState
+          icon={"\u2605"}
+          title="No events yet"
+          description="Create your first event and share the RSVP link."
+          actionLabel="+ New Event"
+          onAction={() => setShowForm(true)}
+        />
       ) : (
         <div className="space-y-3">
           {events.map((ev) => (
-            <div key={ev.id} className="border rounded-lg p-4">
+            <div key={ev.id} className="bg-white rounded-lg border shadow-sm p-5 hover:border-gray-300 transition-colors">
               {editingId === ev.id ? (
                 <div className="space-y-3">
                   <input
@@ -187,7 +191,7 @@ export default function EventsPage() {
                         {ev.event_date
                           ? new Date(ev.event_date).toLocaleDateString()
                           : "No date set"}
-                        {ev.location && ` — ${ev.location}`}
+                        {ev.location && ` \u2014 ${ev.location}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

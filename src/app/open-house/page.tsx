@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Event } from "@/lib/types";
 import QRCode from "@/components/QRCode";
+import PageHeader from "@/components/PageHeader";
+import EmptyState from "@/components/EmptyState";
 
 export default function OpenHousePage() {
   const [openHouses, setOpenHouses] = useState<Event[]>([]);
@@ -83,21 +85,17 @@ export default function OpenHousePage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Open Houses</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
-        >
-          {showForm ? "Cancel" : "+ New Open House"}
-        </button>
-      </div>
+    <div className="p-6 max-w-6xl mx-auto">
+      <PageHeader
+        title="Open Houses"
+        actionLabel={showForm ? "Cancel" : "+ New Open House"}
+        onAction={() => setShowForm(!showForm)}
+      />
 
       {showForm && (
         <form
           onSubmit={handleCreate}
-          className="mb-8 p-4 border rounded-lg bg-gray-50 space-y-3 max-w-md"
+          className="mb-8 bg-white rounded-lg border shadow-sm p-5 space-y-3 max-w-md"
         >
           <input
             name="title"
@@ -136,11 +134,17 @@ export default function OpenHousePage() {
       )}
 
       {openHouses.length === 0 ? (
-        <p className="text-gray-500">No open houses yet.</p>
+        <EmptyState
+          icon={"\u2316"}
+          title="No open houses yet"
+          description="Create your first open house and share the sign-in link."
+          actionLabel="+ New Open House"
+          onAction={() => setShowForm(true)}
+        />
       ) : (
         <div className="space-y-3">
           {openHouses.map((oh) => (
-            <div key={oh.id} className="border rounded-lg p-4">
+            <div key={oh.id} className="bg-white rounded-lg border shadow-sm p-5 hover:border-gray-300 transition-colors">
               {editingId === oh.id ? (
                 <div className="space-y-3">
                   <input
@@ -203,7 +207,7 @@ export default function OpenHousePage() {
                         {oh.event_date
                           ? new Date(oh.event_date).toLocaleDateString()
                           : "No date set"}
-                        {oh.location && ` — ${oh.location}`}
+                        {oh.location && ` \u2014 ${oh.location}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

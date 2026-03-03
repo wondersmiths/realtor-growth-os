@@ -93,4 +93,21 @@ export interface DashboardStats {
   influenced_deals: number;
   influenced_revenue: number;
   roi: number;
+  stale_contacts: number;
+  eligible_contacts: number;
+  upcoming_events: { id: string; title: string; event_date: string }[];
+  recent_messages: {
+    id: string;
+    content: string;
+    status: string;
+    created_at: string;
+    contacts: { first_name: string; last_name?: string };
+  }[];
+  recent_contacts: {
+    id: string;
+    first_name: string;
+    last_name?: string;
+    source_channel: string;
+    created_at: string;
+  }[];
 }
