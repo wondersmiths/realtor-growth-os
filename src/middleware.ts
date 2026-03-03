@@ -7,7 +7,6 @@ const publicRoutes = [
   "/sign-in",
   "/api/events/*/rsvp",
   "/api/open-house/*/sign-in",
-  "/api/auth/debug",
 ];
 
 function isPublicRoute(pathname: string): boolean {
@@ -57,11 +56,15 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // Use getSession() instead of getUser() — reads directly from the cookie
+  // without making a network call to Supabase. This is faster, more reliable,
+  // and avoids network timeouts on Vercel Edge. API routes still use getUser()
+  // for full JWT validation.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  const response = user
+  const response = session
     ? NextResponse.next({ request })
     : NextResponse.redirect(new URL("/auth/login", request.url));
 

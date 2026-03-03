@@ -13,7 +13,6 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [cookieDebug, setCookieDebug] = useState<string | null>(null);
 
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
@@ -41,11 +40,10 @@ export default function LoginPage() {
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setCookieDebug(null);
     setLoading(true);
 
     const supabase = createClient();
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
+    const { error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -57,41 +55,7 @@ export default function LoginPage() {
       return;
     }
 
-    // Check cookie state BEFORE navigating
-    const allCookies = document.cookie;
-    const sbCookies = allCookies
-      .split(";")
-      .map((c) => c.trim())
-      .filter((c) => c.startsWith("sb-"));
-
-    const lines = [
-      `session: ${!!data.session}`,
-      `document.cookie length: ${allCookies.length}`,
-      `sb- cookies found: ${sbCookies.length}`,
-      ...sbCookies.map((c) => {
-        const eq = c.indexOf("=");
-        return `  ${c.substring(0, eq)}: ${c.substring(eq + 1).length} chars`;
-      }),
-    ];
-
-    // Test if cookies are actually sent to the server
-    try {
-      const res = await fetch("/api/auth/debug", { credentials: "include" });
-      const serverData = await res.json();
-      lines.push(
-        `\nServer sees:`,
-        `  rawCookieHeaderLength: ${serverData.rawCookieHeaderLength}`,
-        `  sb cookies: ${JSON.stringify(serverData.sbCookiesFromRawHeader)}`,
-        `  auth user: ${serverData.auth?.user ?? "null"}`,
-        `  auth error: ${serverData.auth?.error ?? "none"}`
-      );
-    } catch (e) {
-      lines.push(`\nServer fetch error: ${e}`);
-    }
-
-    setCookieDebug(lines.join("\n"));
-
-    // Don't auto-redirect — let user see the full debug
+    window.location.href = "/dashboard";
   }
 
   return (
@@ -101,18 +65,6 @@ export default function LoginPage() {
         <p className="text-gray-600 text-sm mb-6">
           Sign in to your account.
         </p>
-
-        {cookieDebug && (
-          <div className="mb-4">
-            <pre className="text-xs bg-blue-50 border border-blue-200 p-3 rounded whitespace-pre-wrap break-all text-blue-800">
-              {cookieDebug}
-            </pre>
-            <p className="text-xs text-gray-500 mt-1">
-              Please screenshot this and share it.
-              {" "}<button onClick={() => window.location.href = "/dashboard"} className="text-blue-600 underline">Go to Dashboard</button>
-            </p>
-          </div>
-        )}
 
         {/* Mode toggle */}
         <div className="flex rounded-md border mb-6">
