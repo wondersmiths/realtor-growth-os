@@ -30,20 +30,13 @@ function isPublicRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Skip auth check entirely for public routes
   if (isPublicRoute(pathname)) {
     const response = NextResponse.next({ request });
     response.headers.set("x-pathname", pathname);
     return response;
   }
 
-  // Collect cookies set by the Supabase client (may arrive asynchronously
-  // via onAuthStateChange → applyServerStorage → setAll)
-  let pendingCookies: Array<{
-    name: string;
-    value: string;
-    options?: Record<string, unknown>;
-  }> = [];
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -54,48 +47,35 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          // Update request cookies so subsequent reads see updated values
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          // Store cookies to apply to the response later
-          pendingCookies = cookiesToSet;
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
         },
       },
     }
   );
 
-  // Validate session
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // The onAuthStateChange callback in @supabase/ssr is async but NOT awaited
-  // by the auth client. Flushing microtasks ensures applyServerStorage (and
-  // our setAll callback) has completed before we build the response.
-  await new Promise((resolve) => setTimeout(resolve, 0));
-
-  // Build the final response
-  let response: NextResponse;
+  supabaseResponse.headers.set("x-pathname", pathname);
 
   if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
-    response = NextResponse.redirect(url);
-  } else {
-    response = NextResponse.next({ request });
+    const redirectResponse = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value);
+    });
+    return redirectResponse;
   }
 
-  // Apply any cookies that were set during getUser() / token refresh
-  pendingCookies.forEach(({ name, value, options }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    response.cookies.set(name, value, options as Record<string, any>);
-  });
-
-  // Inject x-pathname header for layout to conditionally render nav
-  response.headers.set("x-pathname", pathname);
-
-  return response;
+  return supabaseResponse;
 }
 
 export const config = {
