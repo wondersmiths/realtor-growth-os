@@ -36,21 +36,28 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check for Supabase auth cookie directly — no Supabase client needed.
-  // This avoids all @supabase/ssr initialization issues on Vercel Edge.
-  // The middleware only gates access; real JWT validation happens in API routes.
-  const hasAuthCookie = request.cookies
-    .getAll()
-    .some(
-      (cookie) =>
-        cookie.name.startsWith("sb-") &&
-        cookie.name.endsWith("-auth-token") &&
-        cookie.value.length > 0
-    );
+  // Match both single cookies (sb-xxx-auth-token) and chunked cookies
+  // (sb-xxx-auth-token.0, sb-xxx-auth-token.1, etc.)
+  const allCookies = request.cookies.getAll();
+  const hasAuthCookie = allCookies.some(
+    (cookie) =>
+      cookie.name.startsWith("sb-") &&
+      (cookie.name.endsWith("-auth-token") ||
+        /\-auth-token\.\d+$/.test(cookie.name)) &&
+      cookie.value.length > 0
+  );
 
-  const response = hasAuthCookie
-    ? NextResponse.next({ request })
-    : NextResponse.redirect(new URL("/auth/login", request.url));
+  if (!hasAuthCookie) {
+    // Debug: include cookie names in redirect so we can see what middleware received
+    const cookieNames = allCookies.map((c) => c.name).join(",");
+    const url = new URL("/auth/login", request.url);
+    url.searchParams.set("reason", "no-cookie");
+    url.searchParams.set("from", pathname);
+    url.searchParams.set("cookies", cookieNames || "none");
+    return NextResponse.redirect(url);
+  }
 
+  const response = NextResponse.next({ request });
   response.headers.set("x-pathname", pathname);
   return response;
 }

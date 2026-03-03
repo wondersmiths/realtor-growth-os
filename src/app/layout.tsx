@@ -50,12 +50,12 @@ export default async function RootLayout({
                 {link.label}
               </Link>
             ))}
-            <Link
+            <a
               href="/auth/logout"
               className="ml-auto text-sm text-gray-500 hover:text-gray-900"
             >
               Sign out
-            </Link>
+            </a>
           </nav>
         )}
         {children}
