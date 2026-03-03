@@ -7,21 +7,10 @@ import { Contact } from "@/lib/types";
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [debug, setDebug] = useState<string | null>(null);
 
   async function loadContacts() {
-    try {
-      const res = await fetch("/api/contacts");
-      const text = await res.text();
-      if (res.ok) {
-        setContacts(JSON.parse(text));
-        setDebug(null);
-      } else {
-        setDebug(`API ${res.status}: ${text.substring(0, 300)}`);
-      }
-    } catch (err) {
-      setDebug(`Fetch error: ${err}`);
-    }
+    const res = await fetch("/api/contacts");
+    if (res.ok) setContacts(await res.json());
   }
 
   useEffect(() => {
@@ -51,13 +40,7 @@ export default function ContactsPage() {
         </div>
       )}
 
-      {debug && (
-        <pre className="mb-4 text-xs bg-red-50 border border-red-200 p-3 rounded whitespace-pre-wrap break-all text-red-800">
-          {debug}
-        </pre>
-      )}
-
-      {contacts.length === 0 && !debug ? (
+      {contacts.length === 0 ? (
         <p className="text-gray-500">No contacts yet.</p>
       ) : (
         <table className="w-full text-sm border-collapse">

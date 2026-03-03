@@ -48,13 +48,7 @@ export async function middleware(request: NextRequest) {
   );
 
   if (!hasAuthCookie) {
-    // Debug: include cookie names in redirect so we can see what middleware received
-    const cookieNames = allCookies.map((c) => c.name).join(",");
-    const url = new URL("/auth/login", request.url);
-    url.searchParams.set("reason", "no-cookie");
-    url.searchParams.set("from", pathname);
-    url.searchParams.set("cookies", cookieNames || "none");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
   const response = NextResponse.next({ request });
