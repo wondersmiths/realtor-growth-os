@@ -18,10 +18,26 @@ export default function AuthCallbackPage() {
       const type = params.get("type");
       const next = params.get("next") ?? "/dashboard";
 
+      // Helper: ensure the realtors profile row exists after auth
+      async function ensureRealtorProfile() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from("realtors").upsert(
+            {
+              id: user.id,
+              name: user.email?.split("@")[0] || "User",
+              email: user.email || "",
+            },
+            { onConflict: "id", ignoreDuplicates: true }
+          );
+        }
+      }
+
       // 1. Try PKCE code exchange
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (!error) {
+          await ensureRealtorProfile();
           router.replace(next);
           return;
         }
@@ -34,6 +50,7 @@ export default function AuthCallbackPage() {
           type: type as "magiclink" | "email",
         });
         if (!error) {
+          await ensureRealtorProfile();
           router.replace(next);
           return;
         }
@@ -43,6 +60,7 @@ export default function AuthCallbackPage() {
       //    by the Supabase client during initialization)
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        await ensureRealtorProfile();
         router.replace(next);
         return;
       }

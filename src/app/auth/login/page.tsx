@@ -43,7 +43,7 @@ export default function LoginPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -53,6 +53,18 @@ export default function LoginPage() {
     if (authError) {
       setError(authError.message);
       return;
+    }
+
+    // Ensure the realtors profile row exists
+    if (data.user) {
+      await supabase.from("realtors").upsert(
+        {
+          id: data.user.id,
+          name: data.user.email?.split("@")[0] || "User",
+          email: data.user.email || email,
+        },
+        { onConflict: "id", ignoreDuplicates: true }
+      );
     }
 
     window.location.href = "/dashboard";

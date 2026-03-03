@@ -29,7 +29,7 @@ export default function SignupPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signUp({
+    const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -39,6 +39,18 @@ export default function SignupPage() {
     if (authError) {
       setError(authError.message);
       return;
+    }
+
+    // Create the realtors profile row if auto-confirmed
+    if (data.user && data.session) {
+      await supabase.from("realtors").upsert(
+        {
+          id: data.user.id,
+          name: email.split("@")[0],
+          email: email,
+        },
+        { onConflict: "id", ignoreDuplicates: true }
+      );
     }
 
     setSuccess(true);
