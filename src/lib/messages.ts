@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { checkMessageCompliance } from "./compliance";
 import { generateMessage } from "./ai-message";
-import { sendSMS } from "./sms";
+import { sendEmail } from "./email";
 import { Contact, Realtor } from "./types";
 
 interface SendMessageInput {
@@ -68,11 +68,14 @@ export async function sendMessageToContact(
     }
   }
 
-  // Send SMS if phone available
+  // Send email if address available
   let status: "sent" | "failed" | "pending" = "pending";
-  if (contact.phone) {
-    const smsResult = await sendSMS(contact.phone, messageContent);
-    status = smsResult.success ? "sent" : "failed";
+  if (contact.email) {
+    const subject = template
+      ? `${template.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())} from ${realtorData?.name || "Your Realtor"}`
+      : `A message from ${realtorData?.name || "Your Realtor"}`;
+    const emailResult = await sendEmail(contact.email, subject, messageContent);
+    status = emailResult.success ? "sent" : "failed";
   }
 
   // Save message record
@@ -82,7 +85,7 @@ export async function sendMessageToContact(
       realtor_id,
       contact_id,
       content: messageContent,
-      channel: "sms",
+      channel: "email",
       status,
       sent_at: status === "sent" ? new Date().toISOString() : null,
     })

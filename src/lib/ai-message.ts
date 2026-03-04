@@ -13,15 +13,16 @@ interface MessageContext {
 }
 
 export async function generateMessage(ctx: MessageContext): Promise<string> {
-  const systemPrompt = `You are a friendly real estate assistant writing an SMS on behalf of a realtor.
+  const systemPrompt = `You are a friendly real estate assistant writing a short email on behalf of a realtor.
 Rules:
-- Keep the message under 160 characters
+- Keep the message concise (2-4 sentences)
 - Include one local detail about the city or neighborhood
 - Use a warm, personal tone
 - Do NOT use hashtags or emojis
-- Address the contact by first name`;
+- Address the contact by first name
+- Sign off with the realtor's name`;
 
-  const userPrompt = `Write a short SMS from ${ctx.realtorName}${ctx.realtorCity ? ` based in ${ctx.realtorCity}` : ""} to ${ctx.contactName}.
+  const userPrompt = `Write a short email body from ${ctx.realtorName}${ctx.realtorCity ? ` based in ${ctx.realtorCity}` : ""} to ${ctx.contactName}.
 ${ctx.realtorBio ? `Realtor bio: ${ctx.realtorBio}` : ""}
 ${ctx.propertyDetails ? `Property: ${ctx.propertyDetails}` : ""}
 ${ctx.marketInsight ? `Market insight: ${ctx.marketInsight}` : ""}
@@ -33,7 +34,7 @@ ${ctx.template ? `Message purpose: ${ctx.template}` : "Purpose: general follow-u
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: 100,
+    max_tokens: 250,
     temperature: 0.7,
   });
 

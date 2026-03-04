@@ -111,7 +111,7 @@ export default function MessagesPage() {
                 <option value="">Select a contact...</option>
                 {eligibleContacts.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.first_name} {c.last_name || ""} {c.phone ? `(${c.phone})` : ""}
+                    {c.first_name} {c.last_name || ""} {c.email ? `(${c.email})` : ""}
                   </option>
                 ))}
               </select>
@@ -151,12 +151,10 @@ export default function MessagesPage() {
                   value={customContent}
                   onChange={(e) => setCustomContent(e.target.value)}
                   required
-                  rows={3}
-                  maxLength={160}
-                  placeholder="Type your message (max 160 chars)..."
+                  rows={5}
+                  placeholder="Type your email message..."
                   className="w-full border rounded px-3 py-2 text-sm"
                 />
-                <p className="text-xs text-gray-400 mt-1">{customContent.length}/160</p>
               </div>
             )}
 
