@@ -26,9 +26,9 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  if (!body.first_name) {
+  if (!body.first_name || !body.email) {
     return NextResponse.json(
-      { error: "Validation failed", message: "first_name is required" },
+      { error: "Validation failed", message: "first_name and email are required" },
       { status: 400 }
     );
   }

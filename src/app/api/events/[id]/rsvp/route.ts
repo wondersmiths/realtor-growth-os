@@ -20,9 +20,9 @@ export async function POST(
   }
 
   const body = await req.json();
-  if (!body.first_name) {
+  if (!body.first_name || !body.email) {
     return NextResponse.json(
-      { error: "Validation failed", message: "first_name is required" },
+      { error: "Validation failed", message: "first_name and email are required" },
       { status: 400 }
     );
   }
